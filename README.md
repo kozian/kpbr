@@ -1,3 +1,11 @@
+# Краткое описание
+  - install-kpbr.sh - настраивает маршрутизацию по доменным именам.
+    - тянет nftset.conf со списками доменов по wan и vpn
+    - тянет vpn-cidrs.lst со список cidr которые нужно пускать через vpn (tg, claude etc)
+    - зависит от настройки интерфейса для VPN, ниже описано как поставить amneziawg для него. 
+  - update-kpbr.sh - обновляет списки nftset.conf и vpn-cidrs.lst на актуальные из репы.
+  - create-nftsets.sh - опциональный скрипт для сбора nftset.conf из файлов со списками доменов (из sources/)
+
 # install-kpbr.sh - kpbe Installation Script
 
 Автоматический скрипт установки и настройки Dnsmasq-full для OpenWrt 24.10.2 для поддержки маршрутизации по доменам. 
@@ -12,8 +20,7 @@
 	`sh <(wget -O - https://raw.githubusercontent.com/Slava-Shchipunov/awg-openwrt/refs/heads/master/amneziawg-install.sh)`
 4. Вручную настраиваем и включаем WiFi, создаем awg интерфейс с именем `amneziawg` и импортируем настройки awg. 
 5. Накатить install-kpbr.sh
-	`sh <(wget -O - http://192.168.88.10/kozian/domain-lists/raw/branch/main/install-kpbr.sh)`
-   Скрипт тянет с собой nftset.conf и vpn-cidrs.lst для настройки. Можно скачать скрипт и их вручную и запускать докально. 
+	`sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/install-kpbr.sh)`
 
 ## Что делает скрипт
 
@@ -34,15 +41,15 @@
 ## Установка
 
 ```bash
-wget -qO- http://192.168.88.10/kozian/domain-lists/raw/branch/main/install-kpbr.sh | sh
+wget -qO- https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/install-kpbr.sh | sh
 ```
 
 или скачать все и запустить
 
 ```bash
-wget http://192.168.88.10/kozian/domain-lists/raw/branch/main/install-kpbr.sh
-wget http://192.168.88.10/kozian/domain-lists/raw/branch/main/nftset.conf
-wget http://192.168.88.10/kozian/domain-lists/raw/branch/main/vpn-cidrs.lst
+wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/install-kpbr.sh
+wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/nftset.conf
+wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/vpn-cidrs.lst
 chmod +x install-kpbr.sh
 ./install-kpbr.sh
 ```
@@ -78,7 +85,7 @@ https://ifconfig.io
 /etc/
 ├── nftables.d/
 │   ├── sets.nft          # NFT sets для доменов
-│   └── rules.nft         # Правила маркировки пакетов
+│   ├── rules.nft         # Правила маркировки пакетов
 │   └── vpn-cirds.lst     # Список CIDR для маршрутиации через vpn
 ├── dnsmasq.d/
 │   └── nftset.conf       # Список доменов для nftset
@@ -96,7 +103,7 @@ https://ifconfig.io
 
 ```bash
 # Откуда скачивать nftset и CIDR файлы
-REPO_URL="http://192.168.88.10/kozian/domain-lists/src/branch/main/"
+REPO_URL="https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/"
 NFTSET_FILE="nftset.lst"
 CIDR_FILE="vpn-cidrs.lst"
 
@@ -121,7 +128,7 @@ VPN_INTERFACE="amneziawg"
 ### Ручной запуск
 
 ```bash
-wget http://192.168.88.10/kozian/domain-lists/raw/branch/main/update-kpbr.sh
+wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/update-kpbr.sh
 chmod +x update-kpbr.sh
 ./update-kpbr.sh
 ```
@@ -129,7 +136,7 @@ chmod +x update-kpbr.sh
 Или прямое выполнение:
 
 ```bash
-sh <(wget -O - http://192.168.88.10/kozian/domain-lists/raw/branch/main/update-kpbr.sh)
+sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/update-kpbr.sh)
 ```
 
 ### Настройка автоматического обновления через cron
@@ -173,12 +180,6 @@ echo "0 3 * * * /root/update-kpbr.sh" >> /etc/crontabs/root
 ```bash
 # Просмотр лога обновлений
 cat /var/log/kpbr-update.log
-
-# Просмотр последних 50 строк лога
-tail -n 50 /var/log/kpbr-update.log
-
-# Мониторинг лога в реальном времени
-tail -f /var/log/kpbr-update.log
 ```
 
 ### Резервные копии
@@ -221,7 +222,7 @@ ip route
 
 Проверьте доступность репозитория:
 ```bash
-wget http://192.168.88.10/kozian/domain-lists/src/branch/main/nftset.conf
+wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/nftset.conf
 ```
 
 ### Ошибка при установке dnsmasq-full
@@ -271,3 +272,4 @@ ip rule del fwmark 0x2 lookup wanroute
 ## Лицензия
 
 Скрипт распространяется "как есть" без каких-либо гарантий.
+Сделано с помощью claude code.

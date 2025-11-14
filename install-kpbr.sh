@@ -9,7 +9,7 @@
 set -e  # Exit on error
 
 # Configuration
-REPO_URL="http://192.168.88.10/kozian/domain-lists/raw/branch/main"
+REPO_URL="https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/"
 NFTSET_FILE="nftset.conf"
 CIDR_FILE="vpn-cidrs.lst"
 VPN_INTERFACE="amneziawg"
