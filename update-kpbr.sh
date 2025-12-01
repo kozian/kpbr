@@ -58,7 +58,7 @@ log_warning() {
 ###############################################################################
 
 preflight_checks() {
-    log_info "Starting pre-flight checks..."
+    #log_info "Starting pre-flight checks..."
 
     # Check if running as root
     if [ "$(id -u)" -ne 0 ]; then
@@ -75,7 +75,7 @@ preflight_checks() {
     # Create log file if it doesn't exist
     touch "$LOG_FILE"
 
-    log_info "Pre-flight checks passed"
+    #log_info "Pre-flight checks passed"
 }
 
 ###############################################################################
@@ -83,17 +83,17 @@ preflight_checks() {
 ###############################################################################
 
 download_files() {
-    log_info "Downloading new versions from repository..."
+    #log_info "Downloading new versions from repository..."
 
     # Download nftset.conf
-    log_info "Downloading ${NFTSET_FILE}..."
+    log_info "Downloading ${REPO_URL}/${NFTSET_FILE}"
     if ! wget -q -O "/tmp/${NFTSET_FILE}.new" "${REPO_URL}/${NFTSET_FILE}"; then
         log_error "Failed to download ${NFTSET_FILE}"
         return 1
     fi
 
     # Download vpn-cidrs.lst
-    log_info "Downloading ${CIDR_FILE}..."
+    log_info "Downloading ${REPO_URL}/${CIDR_FILE}"
     if ! wget -q -O "/tmp/${CIDR_FILE}.new" "${REPO_URL}/${CIDR_FILE}"; then
         log_error "Failed to download ${CIDR_FILE}"
         rm -f "/tmp/${NFTSET_FILE}.new"
@@ -109,7 +109,7 @@ download_files() {
 ###############################################################################
 
 check_differences() {
-    log_info "Checking for differences..."
+    #log_info "Checking for differences..."
 
     local has_changes=0
 
@@ -130,7 +130,7 @@ check_differences() {
     fi
 
     if [ $has_changes -eq 0 ]; then
-        log_info "No updates available. All files are up to date."
+        log_info "All files are up to date."
         cleanup_temp_files
         exit 0
     fi
@@ -143,7 +143,7 @@ check_differences() {
 ###############################################################################
 
 create_backups() {
-    log_info "Creating backups..."
+    #log_info "Creating backups..."
 
     # Backup nftset.conf
     if ! cp "$NFTSET_TARGET" "$NFTSET_BACKUP"; then
@@ -300,12 +300,7 @@ cleanup_temp_files() {
 ###############################################################################
 
 main() {
-    echo "=========================================="
     echo "kPBR Update Script for OpenWrt"
-    echo "=========================================="
-    echo ""
-
-    log_info "Update process started"
 
     # Run pre-flight checks
     if ! preflight_checks; then
@@ -349,19 +344,7 @@ main() {
     # Cleanup
     cleanup_temp_files
 
-    echo ""
-    echo "=========================================="
     log_info "Update completed successfully!"
-    echo "=========================================="
-    echo ""
-    log_info "Updated files:"
-    echo "  - ${NFTSET_TARGET}"
-    echo "  - ${CIDR_TARGET}"
-    echo ""
-    log_info "Backups created:"
-    echo "  - ${NFTSET_BACKUP}"
-    echo "  - ${CIDR_BACKUP}"
-    echo ""
     log_info "Log file: ${LOG_FILE}"
 }
 
