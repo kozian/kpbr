@@ -75,9 +75,10 @@ dnsmasq --test
 ```
 
 Проверить работу PBR можно через echo-сервисы. 
-В тестовых целях ifconfig.me добавлен в список VPN, а ifconfig.io - WAN
-https://ifconfig.me
-https://ifconfig.io
+В тестовых целях ifconfig.me добавлен в список VPN, а ifconfig.io - WAN. 
+`curl https://ifconfig.me`  - должен показать IP VPN
+`curl https://ifconfig.io`  - должен показать IP WAN
+`curl https://ip.kozian.cc` - должен показать IP маршрута по-умолчанию
 
 ## Структура файлов после установки
 
