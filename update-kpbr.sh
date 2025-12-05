@@ -218,7 +218,7 @@ validate_installation() {
 
     # Test dnsmasq configuration
     log_info "Testing dnsmasq configuration..."
-    if ! dnsmasq --test 2>&1 | tee -a "$LOG_FILE"; then
+    if ! dnsmasq --test --conf-file=/etc/dnsmasq.d/nftset.conf 2>&1 | tee -a "$LOG_FILE"; then
         log_error "dnsmasq configuration test failed"
         return 1
     fi
