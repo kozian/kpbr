@@ -73,7 +73,7 @@ sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/upd
 1. подключаемся по SSH `ssh root@192.168.1.1`
 2. Сохраняем скрипт 
 `cd /root && wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/update-kpbr.sh && chmod +x ./update-kpbr.sh`
-3. Переходим в веб-консоль, раздел `System` (`Система`) > `Scheduled Tasks` (`Планировщик`)
+3. Переходим в веб-консоль, раздел `System` (`Система`) > [Scheduled Tasks (Планировщик)](http://192.168.1.1/cgi-bin/luci/admin/system/crontab)
 4. Вставить cron-строку по желаемой частоте обновлений
   - Каждый день в 3:00 ночи: `0 3 * * * /root/update-kpbr.sh >> /var/log/kpbr-update.log 2>&1`
   - Каждые 6 часов `0 */6 * * * /root/update-kpbr.sh >> /var/log/kpbr-update.log 2>&1`

@@ -6,7 +6,7 @@
   - update-kpbr.sh - обновляет списки nftset.conf и vpn-cidrs.lst на актуальные из репы.
   - create-nftsets.sh - опциональный скрипт для сбора nftset.conf из файлов со списками доменов (из sources/)
 
-# install-kpbr.sh - kpbe Installation Script
+# install-kpbr.sh - kpbr Installation Script
 
 Автоматический скрипт установки и настройки Dnsmasq-full для OpenWrt 24.10.2 для поддержки маршрутизации по доменам. 
 Использует два списка. 
