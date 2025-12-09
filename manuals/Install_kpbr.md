@@ -32,31 +32,21 @@ chmod +x install-kpbr.sh
 ```
 
 ## Проверка работы
-### Проверка конфигурации
-Команды, который показывают все созданные 
 
+Можно проверить скриптом из репы
 ```bash
-# Проверка nftsets
-nft list set inet fw4 vpn_domain_set
-nft list set inet fw4 wan_domain_set
-
-# Проверка правил маршрутизации
-ip rule show
-
-# Проверка таблиц маршрутизации
-ip route show table vpnroute
-ip route show table wanroute
-
-# Проверка конфигурации dnsmasq
-dnsmasq --test
+sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/test-kpbr.sh)
 ```
 
+Детально проверку см в основном [README](../README.md)
+
 Проверить работу PBR можно через echo-сервисы. 
-В тестовых целях ifconfig.me добавлен в список VPN, а ifconfig.io - WAN. 
+  - В тестовых целях ifconfig.me добавлен в список VPN, а ifconfig.io - WAN. 
+  - Важно! Не сработает с самого роутера. На нем запросы не идут через prerouting и не маркируются.
+
 `curl https://ifconfig.me`  - должен показать IP VPN
 `curl https://ifconfig.io`  - должен показать IP WAN
 `curl https://ip.kozian.cc` - должен показать IP маршрута по-умолчанию
-
 
 ## Автоматическое обновление
 
@@ -70,14 +60,34 @@ sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/upd
 
 ### Настройка автоматического обновления через cron
 
-1. подключаемся по SSH `ssh root@192.168.1.1`
+1. подключаемся по SSH 
+```bash
+ssh root@192.168.1.1
+```
+
 2. Сохраняем скрипт 
-`cd /root && wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/update-kpbr.sh && chmod +x ./update-kpbr.sh`
+```bash
+cd /root && wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/update-kpbr.sh && chmod +x ./update-kpbr.sh
+```
+
 3. Переходим в веб-консоль, раздел `System` (`Система`) > [Scheduled Tasks (Планировщик)](http://192.168.1.1/cgi-bin/luci/admin/system/crontab)
+
 4. Вставить cron-строку по желаемой частоте обновлений
-  - Каждый день в 3:00 ночи: `0 3 * * * /root/update-kpbr.sh >> /var/log/kpbr-update.log 2>&1`
-  - Каждые 6 часов `0 */6 * * * /root/update-kpbr.sh >> /var/log/kpbr-update.log 2>&1`
-  - Каждую неделю в воскресенье в 2:00 `0 2 * * 0 /root/update-kpbr.sh >> /var/log/kpbr-update.log 2>&1`
+  - Каждый день в 3:00 ночи: 
+  ```
+  0 3 * * * /root/update-kpbr.sh >> /var/log/kpbr-update.log 2>&1
+  ```
+
+  - Каждые 6 часов 
+  ```
+  0 */6 * * * /root/update-kpbr.sh >> /var/log/kpbr-update.log 2>&1
+  ```
+
+  - Каждую неделю в воскресенье в 2:00 
+  ```
+  0 2 * * 0 /root/update-kpbr.sh >> /var/log/kpbr-update.log 2>&1
+  ```
+
   - или подредактировать частоту по своему усмотрению
 5. `Save` (`Сохранить`)
 
