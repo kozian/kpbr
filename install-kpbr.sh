@@ -2,7 +2,7 @@
 
 ###############################################################################
 # kPBR (kozian Policy Based Routing) Installation Script for OpenWrt
-# Version: 1.0
+# Version: 1.1
 # Description: Automated setup script for domain-based routing via nftables
 ###############################################################################
 

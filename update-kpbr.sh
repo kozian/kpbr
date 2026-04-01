@@ -2,7 +2,7 @@
 
 ###############################################################################
 # kPBR (kozian Policy Based Routing) Update Script for OpenWrt
-# Version: 1.0
+# Version: 1.1
 # Description: Automated update script with validation and rollback support
 ###############################################################################
 
