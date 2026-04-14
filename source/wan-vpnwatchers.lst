@@ -1,0 +1,202 @@
+# Сбербанк
+sber.ru
+sberbank.ru
+sberbank.com
+sber.com
+sberindex.ru
+domclick.ru
+sberzvuk.com
+sberhealth.ru
+sberlogistics.ru
+sberauto.com
+okko.tv
+apps.sber.ru
+developers.sber.ru
+sberdevices.ru
+sbrf.ru
+sbolpay.ru
+
+# Сбербанк — технические
+online.sberbank.ru           # Сбербанк Онлайн
+fintech.sberbank.ru          # API-шлюз
+ecomtest.sberbank.ru         # Платёжный шлюз
+developer.sberbank.ru        # Портал разработчика
+api.developer.sber.ru        # API Registry
+oos.sberbank.ru              # Object Storage
+3dsec.sberbank.ru            # 3D Secure
+okko.sport                   # Стриминг спорта Okko
+
+# Яндекс
+yandex.ru
+yandex.com
+ya.ru
+kinopoisk.ru
+auto.ru
+edadeal.ru
+
+# Яндекс — технические / CDN / API
+yandex.net                   # CDN, аватары, карты, видео, почта
+yastatic.net                 # Статический контент (JS, CSS, шрифты)
+yandex.st                    # Статика (устар.)
+mc.yandex.ru                 # Яндекс Метрика
+mc.yandex.com                # Яндекс Метрика (com)
+api-maps.yandex.ru           # API Карт
+suggest-maps.yandex.ru       # Подсказки Карт
+core-renderer-tiles.maps.yandex.net  # Тайлы карт
+avatars.mds.yandex.net       # Аватары / изображения
+storage.yandexcloud.net      # Yandex Object Storage
+yandexcloud.net              # Yandex Cloud
+passport.yandex.ru           # Авторизация
+
+# VK
+vk.com
+vk.ru
+mail.ru
+ok.ru
+dzen.ru
+vkvideo.ru
+vkplay.ru
+my.com
+
+# VK — технические / CDN / API
+userapi.com                  # CDN медиа (фото, видео, аудио)
+vkuser.net                   # CDN пользовательского контента
+vkcs.cloud                   # VK Cloud Solutions
+mycdn.me                     # CDN для ok.ru (Одноклассники)
+imgsmail.ru                  # CDN изображений Mail.ru
+files.mail.ru                # Файлы Mail.ru
+auth.mail.ru                 # Авторизация VK ID / Mail
+id.vk.com                    # VK ID (авторизация)
+st.vk.com                    # Статика VK
+vk-cdn.net                   # CDN VK
+
+# Wildberries & Russ
+wildberries.ru
+rwb.ru
+russ.expert
+russoutdoor.ru
+
+# Wildberries — технические
+wbbasket.ru                  # CDN корзина/каталог/изображения
+wbstatic.net                 # Статический контент
+static-basket.wbbasket.ru    # Баскеты товаров
+
+# Ozon
+ozon.ru
+ozon.com
+
+# Ozon — технические
+ozoncloud.net                # CDN Ozon
+cdn1.ozone.ru                # CDN изображения
+
+# Газпром-Медиа
+gazprom-media.com
+rutube.ru
+premier.one
+ntv.ru
+tnt-online.ru
+matchtv.ru
+friday.ru
+tv3.ru
+2x2tv.ru
+yappy.media
+
+# Газпром-Медиа — технические
+uma.media                    # Стриминг/CDN контента
+trex.media                   # Стриминг/CDN контента
+start.film                   # Стриминг
+clstorage.net                # Cloud storage для медиа
+ngenix.net                   # CDN-провайдер (NGENIX)
+
+# Авито
+avito.ru
+
+# Авито — технические
+avito.st                     # Статика/CDN
+
+# X5
+x5.ru
+x5.tech
+perekrestok.ru
+5ka.ru
+vprok.ru
+
+# 2ГИС
+2gis.ru
+2gis.com
+
+# 2ГИС — технические
+tiles.api.2gis.ru            # Тайлы карт
+catalog.api.2gis.ru          # API каталога
+dev.2gis.ru                  # Портал разработчика
+
+# ivi
+ivi.ru
+
+# ivi — технические
+ivi.tv                       # Стриминг
+content.ivi.ru               # CDN контента
+
+# Wink
+wink.ru
+
+# Wink — технические
+wink.rt.ru                   # Wink через Ростелеком
+
+# HeadHunter
+hh.ru
+
+# HeadHunter — технические
+hhcdn.ru                     # CDN (статика, изображения)
+
+# Литрес
+litres.ru
+
+# ЦИАН
+cian.ru
+
+# Lamoda
+lamoda.ru
+
+# Lamoda — технические
+lamoda.co                    # CDN/редирект
+a.lmcdn.ru                   # CDN изображений
+
+# Магнит Маркет
+mm.ru
+magnit.com
+magnit.ru
+
+# Всеинструменты.ру
+vseinstrumenti.ru
+
+# Гисметео
+gismeteo.ru
+
+# Рамблер
+rambler.ru
+
+# Рамблер — технические
+rnet.plus                    # CDN Rambler
+
+# Лемана Про
+lemanapro.ru
+leroymerlin.ru
+
+# Туту
+tutu.ru
+
+# Вкусвилл
+vkusvill.ru
+
+# Лента
+lenta.com
+
+# ===== ОБЩИЕ CDN / ИНФРАСТРУКТУРА =====
+# Домены, используемые многими из перечисленных сервисов
+
+ngenix.net                   # Российский CDN (Wink, Rutube и др.)
+ngenix.ru
+edgecdn.ru                   # CDN
+cdnvideo.ru                  # CDN видео
+atb.su                       # Антифрод-сервис

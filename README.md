@@ -6,6 +6,20 @@
   - update-kpbr.sh - обновляет списки nftset.conf и vpn-cidrs.lst на актуальные из репы.
   - create-nftsets.sh - опциональный скрипт для сбора nftset.conf из файлов со списками доменов (из sources/)
 
+## source
+Содержит файлы со списками CIDR/доменов, на базе которых генерируются списки для маршрутизации.
+Основные файлы. Они собираются вручную из других. 
+  - wan-full.lst: сборный файл всех доменов, которые должны ходить напрямую без VPN
+  - vpn-full.lst: сборный файл всех доменов, которые должны ходить через VPN
+  - vpn-cidrs.lst (в корне): сборный файл всех CIDR, которые должны ходить через VPN
+wan-full.lst и vpn-full.lst используются для генерации nftset.conf скриптом create-nftsets.sh
+
+Доп. файлы, информативные
+  - vpn-cidr-apple-facetime.lst - списки IP для работы сервисов apple
+  - vpn-cidr-claude.lst - списки IP для работы claude code
+  - vpn-cidr-telegram.lst - списки ip для работы telegram
+  - wan-vpnwatchers.lst - список российских сайтов из новостей о запрете к ним доступа через VPN. 
+
 # install-kpbr.sh - kpbr Installation Script
 
 Автоматический скрипт установки и настройки Dnsmasq-full для OpenWrt 24.10.2 для поддержки маршрутизации по доменам. 
