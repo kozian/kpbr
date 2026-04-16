@@ -20,6 +20,11 @@ wan-full.lst и vpn-full.lst используются для генерации 
   - vpn-cidr-telegram.lst - списки ip для работы telegram
   - wan-vpnwatchers.lst - список российских сайтов из новостей о запрете к ним доступа через VPN. 
 
+Источники (не полный список, т.к. вручную тоже добавляю)
+ - https://github.com/hydraponique/roscomvpn-geosite/
+ - https://github.com/itdoginfo/allow-domains/
+
+
 # install-kpbr.sh - kpbr Installation Script
 
 Автоматический скрипт установки и настройки Dnsmasq-full для OpenWrt 24.10.2 для поддержки маршрутизации по доменам. 
