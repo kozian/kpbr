@@ -151,13 +151,13 @@ dnsmasq --test --conf-file=/etc/dnsmasq.d/nftset.conf
 ```
 
 5. Проверить работу PBR можно через echo-сервисы. 
-  - В тестовых целях ifconfig.me добавлен в список VPN, а ifconfig.io - WAN. 
-  - Важно! Не сработает с самого роутера. На нем запросы не идут через prerouting и не маркируются.
+  - Для теста можно использовать ip.kozian.cc - добавлен в список VPN
+  - Сервисы ifconfig.io\ifconfig.me и некоторые другие чекеры добавлены в список WAN, чтобы не давать палить VPN. 
+  - Важно! Curl не сработает с самого роутера. На нем запросы не идут через prerouting и не маркируются.
 
 ```bash
-`curl https://ifconfig.me`  - должен показать IP VPN
-`curl https://ifconfig.io`  - должен показать IP WAN
-`curl https://ip.kozian.cc` - должен показать IP маршрута по-умолчанию
+`curl https://ifconfig.me`  - должен показать IP WAN
+`curl https://ip.kozian.cc` - должен показать IP VPN
 ```
 
 ## Автоматическое обновление

@@ -43,11 +43,7 @@ done
 # Хосты для теста VPN/WAN (добавляются только с опцией --test-hosts)
 if [ "$ADD_TEST_HOSTS" = true ]; then
     # Хосты для теста VPN
-    echo "nftset=/ifconfig.me/4#inet#fw4#vpn_domain_set" >> ${NFTSET}
-
-    # Хосты для теста WAN
-    echo "nftset=/ifconfig.io/4#inet#fw4#wan_domain_set" >> ${NFTSET}
-    echo "nftset=/kozian.ru/4#inet#fw4#wan_domain_set" >> ${NFTSET}
+    echo "nftset=/kozian.cc/4#inet#fw4#vpn_domain_set" >> ${NFTSET}
 fi
 
 # ip.kozian.cc - будет работать по дефолт пути
