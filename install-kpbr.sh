@@ -93,14 +93,34 @@ detect_wan_config() {
 
 install_dnsmasq_full() {
     log_info "Step 1: Reinstalling dnsmasq-full..."
-    
+
+    # Detect package manager: apk (new OpenWrt) or opkg (old OpenWrt)
+    if command -v apk >/dev/null 2>&1; then
+        PKG_MGR="apk"
+    elif command -v opkg >/dev/null 2>&1; then
+        PKG_MGR="opkg"
+    else
+        log_error "No supported package manager found (opkg or apk)"
+        exit 1
+    fi
+    log_info "Detected package manager: $PKG_MGR"
+
     log_info "Updating package lists..."
-    opkg update
-    check_success "Failed to update opkg" "Package lists updated"
-    
+    if [ "$PKG_MGR" = "apk" ]; then
+        apk update
+    else
+        opkg update
+    fi
+    check_success "Failed to update package lists" "Package lists updated"
+
     log_info "Removing dnsmasq and installing dnsmasq-full..."
-    opkg remove dnsmasq
-    opkg install dnsmasq-full
+    if [ "$PKG_MGR" = "apk" ]; then
+        apk del dnsmasq
+        apk add dnsmasq-full
+    else
+        opkg remove dnsmasq
+        opkg install dnsmasq-full
+    fi
     check_success "Failed to install dnsmasq-full" "dnsmasq-full installed successfully"
 }
 
