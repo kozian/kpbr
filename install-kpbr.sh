@@ -348,7 +348,7 @@ main() {
     echo ""
     echo "test kpbr:    sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/test-kpbr.sh)"
     echo "update lists: sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/update-kpbr.sh)"
-    echo "uninstall:    sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/uninstall-kpbr.sh)"
+    echo "uninstall:    sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/test/uninstall-kpbr.sh)"
 }
 
 # Run main function
