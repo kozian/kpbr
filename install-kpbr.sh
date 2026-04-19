@@ -68,26 +68,6 @@ preflight_checks() {
 }
 
 ###############################################################################
-# Step 0.5: Auto-detect WAN interface and gateway
-###############################################################################
-
-detect_wan_config() {
-    log_info "Detecting WAN interface and gateway..."
-    
-    # Get default gateway and interface
-    WAN_GATEWAY=$(ip route | grep '^default' | awk '{print $3}' | head -n1)
-    WAN_INTERFACE=$(ip route | grep '^default' | awk '{print $5}' | head -n1)
-    
-    if [ -z "$WAN_GATEWAY" ] || [ -z "$WAN_INTERFACE" ]; then
-        log_error "Could not detect WAN gateway or interface"
-        exit 1
-    fi
-    
-    log_info "Detected WAN interface: $WAN_INTERFACE"
-    log_info "Detected WAN gateway: $WAN_GATEWAY"
-}
-
-###############################################################################
 # Step 1: Reinstall dnsmasq-full
 ###############################################################################
 
@@ -273,7 +253,7 @@ ip rule add fwmark 0x1 lookup vpnroute
 ip rule add fwmark 0x2 lookup wanroute
 
 # Add routes
-WAN_GW=$(ubus call network.interface.wan status | jsonfilter -e '@.route[@.target="0.0.0.0"].nexthop')
+WAN_GW=\$(ubus call network.interface.wan status | jsonfilter -e '@.route[@.target="0.0.0.0"].nexthop')
 
 ip route add default dev ${VPN_INTERFACE} table vpnroute
 ip route add default via \${WAN_GW} dev ${WAN_INTERFACE} table wanroute
@@ -320,7 +300,6 @@ main() {
     echo ""
     
     preflight_checks
-    #detect_wan_config
     install_dnsmasq_full
     create_nftsets
     configure_dnsmasq
