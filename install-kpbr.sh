@@ -259,6 +259,8 @@ configure_routing_rules() {
     fi
     
     log_info "Step 4.2: Configuring routing rules..."
+
+    WAN_INTERFACE=$(ubus call network.interface.wan status | jsonfilter -e '@.l3_device')
     
     cat << EOF > /etc/firewall.user
 #!/bin/sh
@@ -271,8 +273,10 @@ ip rule add fwmark 0x1 lookup vpnroute
 ip rule add fwmark 0x2 lookup wanroute
 
 # Add routes
+WAN_GW=$(ubus call network.interface.wan status | jsonfilter -e '@.route[@.target="0.0.0.0"].nexthop')
+
 ip route add default dev ${VPN_INTERFACE} table vpnroute
-ip route add default via ${WAN_GATEWAY} dev ${WAN_INTERFACE} table wanroute
+ip route add default via \${WAN_GW} dev ${WAN_INTERFACE} table wanroute
 
 # Add known cidrs
 while read ELEMENT; do
@@ -316,7 +320,7 @@ main() {
     echo ""
     
     preflight_checks
-    detect_wan_config
+    #detect_wan_config
     install_dnsmasq_full
     create_nftsets
     configure_dnsmasq
@@ -341,6 +345,10 @@ main() {
     echo "  - ip rule show"
     echo "  - ip route show table vpnroute"
     echo "  - ip route show table wanroute"
+    echo ""
+    echo "test kpbr:    sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/test-kpbr.sh)"
+    echo "update lists: sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/update-kpbr.sh)"
+    echo "uninstall:    sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/uninstall-kpbr.sh)"
 }
 
 # Run main function
