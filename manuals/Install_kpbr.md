@@ -28,9 +28,9 @@ wget -qO- https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/install-
 
 ```bash
 wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/install-kpbr.sh
-mkdir -p etc/dnsmasq.d etc/nftables.d
-wget -O etc/dnsmasq.d/nftset.conf  https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/etc/dnsmasq.d/nftset.conf
-wget -O etc/nftables.d/vpn-cidrs.lst https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/etc/nftables.d/vpn-cidrs.lst
+mkdir -p /etc/dnsmasq.d /etc/nftables.d
+wget -O /etc/dnsmasq.d/nftset.conf    https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/etc/dnsmasq.d/nftset.conf
+wget -O /etc/nftables.d/vpn-cidrs.lst https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/etc/nftables.d/vpn-cidrs.lst
 chmod +x install-kpbr.sh
 ./install-kpbr.sh
 ```

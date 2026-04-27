@@ -9,19 +9,20 @@
 set -e  # Exit on error
 
 # Configuration
-REPO_URL="https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/"
-NFTSET_FILE="nftset.conf"
-NFTSET_SRC="etc/dnsmasq.d/nftset.conf"
-CIDR_FILE="vpn-cidrs.lst"
-CIDR_SRC="etc/nftables.d/vpn-cidrs.lst"
-NFTSET_TARGET="/etc/dnsmasq.d/nftset.conf"
-CIDR_TARGET="/etc/nftables.d/vpn-cidrs.lst"
+REPO_URL="https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main"
+NFTSET_PATH="/etc/dnsmasq.d/nftset.conf"
+CIDR_PATH="/etc/nftables.d/vpn-cidrs.lst"
+DNS_PATH="/etc/dnsmasq.d/dns-servers.conf"
+NFTSET_FILE=$(basename "$NFTSET_PATH")
+CIDR_FILE=$(basename "$CIDR_PATH")
+DNS_FILE=$(basename "$DNS_PATH")
 LOG_FILE="/var/log/kpbr-update.log"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # Backup file names
-NFTSET_BACKUP="${NFTSET_TARGET}_${TIMESTAMP}.bak"
-CIDR_BACKUP="${CIDR_TARGET}_${TIMESTAMP}.bak"
+NFTSET_BACKUP="${NFTSET_PATH}_${TIMESTAMP}.bak"
+CIDR_BACKUP="${CIDR_PATH}_${TIMESTAMP}.bak"
+DNS_BACKUP="${DNS_PATH}_${TIMESTAMP}.bak"
 
 # Colors for output
 RED='\033[0;31m'
@@ -69,7 +70,7 @@ preflight_checks() {
     fi
 
     # Check if kPBR is installed
-    if [ ! -f "$NFTSET_TARGET" ] || [ ! -f "$CIDR_TARGET" ]; then
+    if [ ! -f "$NFTSET_PATH" ] || [ ! -f "$CIDR_PATH" ] || [ ! -f "$DNS_PATH" ]; then
         log_error "kPBR does not appear to be installed. Please run install-kpbr.sh first"
         exit 1
     fi
@@ -88,17 +89,25 @@ download_files() {
     #log_info "Downloading new versions from repository..."
 
     # Download nftset.conf
-    log_info "Downloading ${REPO_URL}/${NFTSET_SRC}"
-    if ! wget -q -O "/tmp/${NFTSET_FILE}.new" "${REPO_URL}/${NFTSET_SRC}"; then
+    log_info "Downloading ${REPO_URL}${NFTSET_PATH}"
+    if ! wget -q -O "/tmp/${NFTSET_FILE}.new" "${REPO_URL}${NFTSET_PATH}"; then
         log_error "Failed to download ${NFTSET_FILE}"
         return 1
     fi
 
     # Download vpn-cidrs.lst
-    log_info "Downloading ${REPO_URL}/${CIDR_SRC}"
-    if ! wget -q -O "/tmp/${CIDR_FILE}.new" "${REPO_URL}/${CIDR_SRC}"; then
+    log_info "Downloading ${REPO_URL}${CIDR_PATH}"
+    if ! wget -q -O "/tmp/${CIDR_FILE}.new" "${REPO_URL}${CIDR_PATH}"; then
         log_error "Failed to download ${CIDR_FILE}"
         rm -f "/tmp/${NFTSET_FILE}.new"
+        return 1
+    fi
+
+    # Download dns-servers.conf
+    log_info "Downloading ${REPO_URL}${DNS_PATH}"
+    if ! wget -q -O "/tmp/${DNS_FILE}.new" "${REPO_URL}${DNS_PATH}"; then
+        log_error "Failed to download ${DNS_FILE}"
+        rm -f "/tmp/${NFTSET_FILE}.new" "/tmp/${CIDR_FILE}.new"
         return 1
     fi
 
@@ -116,7 +125,7 @@ check_differences() {
     local has_changes=0
 
     # Compare nftset.conf
-    if ! cmp -s "$NFTSET_TARGET" "/tmp/${NFTSET_FILE}.new"; then
+    if ! cmp -s "$NFTSET_PATH" "/tmp/${NFTSET_FILE}.new"; then
         log_info "Changes detected in ${NFTSET_FILE}"
         has_changes=1
     else
@@ -124,11 +133,19 @@ check_differences() {
     fi
 
     # Compare vpn-cidrs.lst
-    if ! cmp -s "$CIDR_TARGET" "/tmp/${CIDR_FILE}.new"; then
+    if ! cmp -s "$CIDR_PATH" "/tmp/${CIDR_FILE}.new"; then
         log_info "Changes detected in ${CIDR_FILE}"
         has_changes=1
     else
         log_info "No changes in ${CIDR_FILE}"
+    fi
+
+    # Compare dns-servers.conf
+    if ! cmp -s "$DNS_PATH" "/tmp/${DNS_FILE}.new"; then
+        log_info "Changes detected in ${DNS_FILE}"
+        has_changes=1
+    else
+        log_info "No changes in ${DNS_FILE}"
     fi
 
     if [ $has_changes -eq 0 ]; then
@@ -148,18 +165,25 @@ create_backups() {
     #log_info "Creating backups..."
 
     # Backup nftset.conf
-    if ! cp "$NFTSET_TARGET" "$NFTSET_BACKUP"; then
+    if ! cp "$NFTSET_PATH" "$NFTSET_BACKUP"; then
         log_error "Failed to backup ${NFTSET_FILE}"
         return 1
     fi
     log_info "Backed up to ${NFTSET_BACKUP}"
 
     # Backup vpn-cidrs.lst
-    if ! cp "$CIDR_TARGET" "$CIDR_BACKUP"; then
+    if ! cp "$CIDR_PATH" "$CIDR_BACKUP"; then
         log_error "Failed to backup ${CIDR_FILE}"
         return 1
     fi
     log_info "Backed up to ${CIDR_BACKUP}"
+
+    # Backup dns-servers.conf
+    if ! cp "$DNS_PATH" "$DNS_BACKUP"; then
+        log_error "Failed to backup ${DNS_FILE}"
+        return 1
+    fi
+    log_info "Backed up to ${DNS_BACKUP}"
 
     # Keep only last 5 backups for each file
     cleanup_old_backups
@@ -175,13 +199,19 @@ cleanup_old_backups() {
     log_info "Cleaning old backups (keeping last 5 for each file)..."
 
     # Cleanup old nftset.conf backups
-    ls -t "${NFTSET_TARGET}_"*.bak 2>/dev/null | tail -n +6 | while read old_backup; do
+    ls -t "${NFTSET_PATH}_"*.bak 2>/dev/null | tail -n +6 | while read old_backup; do
         rm -f "$old_backup"
         log_info "Removed old backup: ${old_backup}"
     done
 
     # Cleanup old vpn-cidrs.lst backups
-    ls -t "${CIDR_TARGET}_"*.bak 2>/dev/null | tail -n +6 | while read old_backup; do
+    ls -t "${CIDR_PATH}_"*.bak 2>/dev/null | tail -n +6 | while read old_backup; do
+        rm -f "$old_backup"
+        log_info "Removed old backup: ${old_backup}"
+    done
+
+    # Cleanup old dns-servers.conf backups
+    ls -t "${DNS_PATH}_"*.bak 2>/dev/null | tail -n +6 | while read old_backup; do
         rm -f "$old_backup"
         log_info "Removed old backup: ${old_backup}"
     done
@@ -195,18 +225,25 @@ update_files() {
     log_info "Updating configuration files..."
 
     # Update nftset.conf
-    if ! cp "/tmp/${NFTSET_FILE}.new" "$NFTSET_TARGET"; then
+    if ! cp "/tmp/${NFTSET_FILE}.new" "$NFTSET_PATH"; then
         log_error "Failed to update ${NFTSET_FILE}"
         return 1
     fi
-    log_info "Updated ${NFTSET_TARGET}"
+    log_info "Updated ${NFTSET_PATH}"
 
     # Update vpn-cidrs.lst
-    if ! cp "/tmp/${CIDR_FILE}.new" "$CIDR_TARGET"; then
+    if ! cp "/tmp/${CIDR_FILE}.new" "$CIDR_PATH"; then
         log_error "Failed to update ${CIDR_FILE}"
         return 1
     fi
-    log_info "Updated ${CIDR_TARGET}"
+    log_info "Updated ${CIDR_PATH}"
+
+    # Update dns-servers.conf
+    if ! cp "/tmp/${DNS_FILE}.new" "$DNS_PATH"; then
+        log_error "Failed to update ${DNS_FILE}"
+        return 1
+    fi
+    log_info "Updated ${DNS_PATH}"
 
     return 0
 }
@@ -220,11 +257,25 @@ validate_installation() {
 
     # Test dnsmasq configuration
     log_info "Testing dnsmasq configuration..."
-    if ! dnsmasq --test --conf-file=/etc/dnsmasq.d/nftset.conf 2>&1 | tee -a "$LOG_FILE"; then
+    if ! dnsmasq --test 2>&1 | tee -a "$LOG_FILE"; then
         log_error "dnsmasq configuration test failed"
         return 1
     fi
     log_info "dnsmasq configuration is valid"
+
+    log_info "Testing dnsmasq configuration for ${NFTSET_PATH}..."
+    if ! dnsmasq --test --conf-file=${NFTSET_PATH} 2>&1 | tee -a "$LOG_FILE"; then
+        log_error "dnsmasq ${NFTSET_PATH} test failed"
+        return 1
+    fi
+    log_info "dnsmasq ${NFTSET_PATH} is valid"
+
+    log_info "Testing dnsmasq configuration for ${DNS_PATH}..."
+    if ! dnsmasq --test --conf-file=${DNS_PATH} 2>&1 | tee -a "$LOG_FILE"; then
+        log_error "dnsmasq ${DNS_PATH} test failed"
+        return 1
+    fi
+    log_info "dnsmasq ${DNS_PATH} is valid"
 
     # Restart dnsmasq
     log_info "Restarting dnsmasq..."
@@ -267,14 +318,20 @@ rollback() {
 
     # Restore nftset.conf
     if [ -f "$NFTSET_BACKUP" ]; then
-        cp "$NFTSET_BACKUP" "$NFTSET_TARGET"
+        cp "$NFTSET_BACKUP" "$NFTSET_PATH"
         log_info "Restored ${NFTSET_FILE}"
     fi
 
     # Restore vpn-cidrs.lst
     if [ -f "$CIDR_BACKUP" ]; then
-        cp "$CIDR_BACKUP" "$CIDR_TARGET"
+        cp "$CIDR_BACKUP" "$CIDR_PATH"
         log_info "Restored ${CIDR_FILE}"
+    fi
+
+    # Restore dns-servers.conf
+    if [ -f "$DNS_BACKUP" ]; then
+        cp "$DNS_BACKUP" "$DNS_PATH"
+        log_info "Restored ${DNS_FILE}"
     fi
 
     # Restart services
@@ -295,6 +352,7 @@ cleanup_temp_files() {
     log_info "Cleaning up temporary files..."
     rm -f "/tmp/${NFTSET_FILE}.new"
     rm -f "/tmp/${CIDR_FILE}.new"
+    rm -f "/tmp/${DNS_FILE}.new"
 }
 
 ###############################################################################

@@ -9,13 +9,11 @@
 set -e  # Exit on error
 
 # Configuration
-REPO_URL="https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/"
-NFTSET_FILE="nftset.conf"
-NFTSET_SRC="etc/dnsmasq.d/nftset.conf"
-CIDR_FILE="vpn-cidrs.lst"
-CIDR_SRC="etc/nftables.d/vpn-cidrs.lst"
+REPO_URL="https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main"
+NFTSET_PATH="/etc/dnsmasq.d/nftset.conf"
+CIDR_PATH="/etc/nftables.d/vpn-cidrs.lst"
+DNS_PATH="/etc/dnsmasq.d/dns-servers.conf"
 VPN_INTERFACE="amneziawg"
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -149,27 +147,35 @@ configure_dnsmasq() {
     # Create dnsmasq.d directory
     mkdir -p /etc/dnsmasq.d
     check_success "Failed to create /etc/dnsmasq.d directory" "dnsmasq.d directory created"
-    
-    # Check for local file first, download if not present
-    if [ -f "${SCRIPT_DIR}/${NFTSET_SRC}" ]; then
-        log_info "Using local ${NFTSET_SRC} file"
-        # Copy to dnsmasq.d
-        cp ${SCRIPT_DIR}/${NFTSET_SRC} /etc/dnsmasq.d/nftset.conf
-        check_success "Failed to copy nftset configuration" "nftset configuration copied"
-    else
-        log_info "Downloading nftset list from repository..."
-        wget -O /tmp/${NFTSET_FILE} ${REPO_URL}/${NFTSET_SRC}
-        check_success "Failed to download nftset list" "nftset list downloaded"
 
-        # Copy to dnsmasq.d
-        cp /tmp/${NFTSET_FILE} /etc/dnsmasq.d/nftset.conf
-        check_success "Failed to copy nftset configuration" "nftset configuration copied"
+    if [ -f "${NFTSET_PATH}" ]; then
+        log_info "${NFTSET_PATH} already exists — keeping current version. Run update-kpbr.sh to refresh."
+    else
+        log_info "Downloading nftset list to ${NFTSET_PATH}..."
+        wget -O "${NFTSET_PATH}" "${REPO_URL}${NFTSET_PATH}"
+        check_success "Failed to download nftset list" "nftset list downloaded"
+    fi
+
+    if [ -f "${DNS_PATH}" ]; then
+        log_info "${DNS_PATH} already exists — keeping current version. Run update-kpbr.sh to refresh."
+    else
+        log_info "Downloading DNS servers config to ${DNS_PATH}..."
+        wget -O "${DNS_PATH}" "${REPO_URL}${DNS_PATH}"
+        check_success "Failed to download DNS servers config" "DNS servers config downloaded"
     fi
     
     # Test dnsmasq configuration
     log_info "Testing dnsmasq configuration..."
     dnsmasq --test
     check_success "dnsmasq configuration test failed" "dnsmasq configuration is valid"
+
+    log_info "Testing dnsmasq configuration for ${NFTSET_PATH}..."
+    dnsmasq --test --conf-file=${NFTSET_PATH}
+    check_success "dnsmasq ${NFTSET_PATH} test failed" "dnsmasq ${NFTSET_PATH} is valid"
+
+    log_info "Testing dnsmasq configuration for ${DNS_PATH}..."
+    dnsmasq --test --conf-file=${DNS_PATH}
+    check_success "dnsmasq ${DNS_PATH} test failed" "dnsmasq ${DNS_PATH} is valid"
     
     # Restart dnsmasq
     log_info "Restarting dnsmasq..."
@@ -225,21 +231,14 @@ configure_routing_tables() {
 }
 
 configure_routing_rules() {
-    # Check for local file first, download if not present
-    if [ -f "${SCRIPT_DIR}/${CIDR_SRC}" ]; then
-        log_info "Using local ${CIDR_SRC} file"
-        cp "${SCRIPT_DIR}/${CIDR_SRC}" /etc/nftables.d/vpn-cidrs.lst
-        check_success "Failed to copy CIDR configuration" "CIDR configuration copied"
+    if [ -f "${CIDR_PATH}" ]; then
+        log_info "${CIDR_PATH} already exists — keeping current version. Run update-kpbr.sh to refresh."
     else
-        log_info "Downloading CIDR for VPN from repository..."
-        wget -O /tmp/${CIDR_FILE} ${REPO_URL}/${CIDR_SRC}
+        log_info "Downloading CIDR list to ${CIDR_PATH}..."
+        wget -O "${CIDR_PATH}" "${REPO_URL}${CIDR_PATH}"
         check_success "Failed to download CIDR list" "CIDR list downloaded"
-
-        # Copy to nftables.d
-        cp /tmp/${CIDR_FILE} /etc/nftables.d/vpn-cidrs.lst
-        check_success "Failed to copy CIDR configuration" "CIDR configuration copied"
     fi
-    
+
     log_info "Step 4.2: Configuring routing rules..."
 
 ## добавить проверку на пустое значение
