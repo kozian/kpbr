@@ -3,7 +3,7 @@
   - test-kpbr.sh - диагностическая проверка по настройке kpbr
   - update-kpbr.sh - обновляет списки nftset.conf и vpn-cidrs.lst на актуальные из репы.
   - uninstall-kpbr.sh - удаляет kpbr.
-  - create-nftsets.sh - служебный скрипт для создания nftset.conf из файлов со списками доменов (из sources/)
+  - create-nftsets.sh - служебный скрипт для создания nftset.conf из файлов со списками доменов (из source/)
 
 ## source
 Содержит файлы со списками CIDR/доменов, на базе которых генерируются списки для маршрутизации.
@@ -29,8 +29,13 @@ wan-full.lst и vpn-full.lst используются для генерации 
 Автоматический скрипт установки и настройки Dnsmasq-full для OpenWrt 24.10.2 для поддержки маршрутизации по доменам. 
 Использует два списка. 
   - WAN - для маршрутизации напрямую, 
-  - VPN - для маршрутизации через интерфейс VPN (хардкод 'amneziawg' имя интерфейса).
+  - VPN - для маршрутизации через интерфейс VPN.
 Список IP и доменных имен берется из приложенных nftset.conf и vpn-cidrs.lst.
+
+VPN- и WAN-интерфейсы определяются автоматически через `ubus call network.interface dump`:
+  - VPN-кандидат: интерфейс с `proto` = `wgserver|wgclient|wireguard|openvpn|amnezia` или l3-устройством `amneziawg|awg|wg|tun|sing`.
+  - WAN-кандидат: интерфейс с default-маршрутом (`0.0.0.0/0`).
+  - Если кандидат один — используется он. Если несколько — установка падает с подсказкой задать переменную `VPN_INTERFACE` / `WAN_INTERFACE` в начале скрипта. По умолчанию `VPN_INTERFACE="amneziawg"`, `WAN_INTERFACE=""` (автоопределение).
 
 ## HOWTO обновляем роутер
 1. Ставим прошивку openwrt. Зависит от роутера.
@@ -48,12 +53,13 @@ wan-full.lst и vpn-full.lst используются для генерации 
 4. ✅ Настраивает маркировку пакетов через nftables
 5. ✅ Создает таблицы маршрутизации (vpnroute, wanroute)
 6. ✅ Настраивает правила маршрутизации с автозапуском
-7. ✅ Добавляет извесные геоблок или заблокированные CIDR в nftset
+7. ✅ Добавляет известные геоблок или заблокированные CIDR в nftset
 
 ## Требования
 
 - OpenWrt 24.10.2
-- Настроенный VPN интерфейс `amneziawg` (или другой, но тогда нужно поменять в скрипте установки параметр)
+- Настроенный и поднятый VPN интерфейс (по умолчанию ожидается `amneziawg`; иначе скрипт попробует автоопределить единственный VPN или попросит задать `VPN_INTERFACE`)
+- Поднятый WAN интерфейс с default-маршрутом (автоопределяется; при нескольких кандидатах нужно задать `WAN_INTERFACE`)
 - Доступ к репозиторию с файлами `nftset.conf` и `vpn-cirds.lst` (можно вручную сохранить)
 
 ## Установка
@@ -106,13 +112,25 @@ chmod +x uninstall-kpbr.sh
 
 ```bash
 # Откуда скачивать nftset и CIDR файлы
-REPO_URL="https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/"
-NFTSET_FILE="nftset.lst"
-CIDR_FILE="vpn-cidrs.lst"
+REPO_URL="https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main"
+NFTSET_PATH="/etc/dnsmasq.d/nftset.conf"
+CIDR_PATH="/etc/nftables.d/vpn-cidrs.lst"
+DNS_PATH="/etc/dnsmasq.d/dns-servers.conf"
 
-# Наименование интерфейса для VPN
+# Имя VPN-интерфейса (как в /etc/config/network). Пустое значение — автоопределение.
 VPN_INTERFACE="amneziawg"
+# Имя WAN-интерфейса. Пустое значение — автоопределение по наличию default-маршрута.
+WAN_INTERFACE=""
 ```
+
+Логика разрешения интерфейсов в `configure_routing_rules`:
+  - Если переменная задана и совпадает с найденным кандидатом — используется явно заданное значение.
+  - Если переменная пустая и найден ровно один кандидат — он подставляется автоматически.
+  - Если кандидатов нет или несколько — установка прерывается с сообщением, какое значение нужно задать.
+
+Сгенерированный `/etc/firewall.user` в момент срабатывания (при старте firewall и hotplug-событиях интерфейсов) проверяет существование заданных интерфейсов через `ubus call network.interface.<name> status`:
+  - Если интерфейс отсутствует — печатает ошибку в stderr и **не добавляет** соответствующее `fwmark` правило (0x1 для VPN, 0x2 для WAN), остальное продолжает работать.
+  - `WAN_GW` и l3-устройства (`VPN_DEVICE`, `WAN_DEVICE`) определяются на лету из ответа `ubus`, поэтому при смене шлюза/устройства WAN перенастройка не требуется.
 
 ## Проверка работы
 
@@ -141,9 +159,9 @@ ip rule show
 ```
 
 3. таблицы маршрутизации должны содержать default записи.
-  - vpnroute на интерфейс vpn (amneziawg по инструкции)
-  - wanroute на интерфейс WAN порта и gateway вышестоящего роутера\провайдера
-  - если что-то отсутствует - смотрим /etc/firewall.user, возожно там ошибка. Например не тот интерфейс или IP. 
+  - vpnroute на l3-устройство VPN-интерфейса (по умолчанию `amneziawg`)
+  - wanroute на l3-устройство WAN-интерфейса и gateway вышестоящего роутера\провайдера
+  - если что-то отсутствует — смотрим `/etc/firewall.user`. В шапке файла указаны `VPN_INTERFACE` и `WAN_INTERFACE`, по которым через `ubus` определяются устройство и шлюз. При неверном/отсутствующем интерфейсе скрипт выведет `[kPBR] ERROR: ... not found` в системный лог и не добавит fwmark-правило.
 
 ```bash
 ip route show table vpnroute
@@ -255,12 +273,22 @@ cp /etc/nftables.d/vpn-cidrs.lst_TIMESTAMP.bak /etc/nftables.d/vpn-cidrs.lst
 
 ## Troubleshooting
 
-### Ошибка: "Could not detect WAN gateway or interface"
+### Ошибка: "No WAN interface with default route detected" / "No active VPN interface detected"
 
-Убедитесь, что у вас настроен default route:
+Установка автоопределяет интерфейсы по `ubus call network.interface dump`. Проверьте:
 ```bash
+ubus call network.interface dump | jsonfilter -e '@.interface[*].interface'
 ip route
 ```
+Убедитесь, что VPN поднят (`up: true`) и у WAN есть default route. Если интерфейсов несколько и скрипт сообщает `Multiple ... interfaces detected: ...`, задайте нужное значение в начале `install-kpbr.sh`:
+```bash
+VPN_INTERFACE="amneziawg"   # имя как в /etc/config/network
+WAN_INTERFACE="wan"
+```
+
+### `[kPBR] ERROR: VPN/WAN interface '...' not found` при срабатывании firewall.user
+
+Имя интерфейса, прописанное в `/etc/firewall.user`, не отвечает в `ubus call network.interface.<name> status`. Возможные причины: интерфейс переименован, удалён или ещё не поднят. Поправьте значения `VPN_INTERFACE` / `WAN_INTERFACE` в шапке `/etc/firewall.user` и выполните `/etc/firewall.user`.
 
 ### Ошибка: "Failed to download nftset list"
 

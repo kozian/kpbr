@@ -14,6 +14,7 @@ NFTSET_PATH="/etc/dnsmasq.d/nftset.conf"
 CIDR_PATH="/etc/nftables.d/vpn-cidrs.lst"
 DNS_PATH="/etc/dnsmasq.d/dns-servers.conf"
 VPN_INTERFACE="amneziawg"
+WAN_INTERFACE=""
 
 # Colors for output
 RED='\033[0;31m'
@@ -239,26 +240,116 @@ configure_routing_rules() {
         check_success "Failed to download CIDR list" "CIDR list downloaded"
     fi
 
-    log_info "Step 4.2: Configuring routing rules..."
+    log_info "Step 4.2: Detecting VPN and WAN interfaces..."
 
-## добавить проверку на пустое значение
-    WAN_INTERFACE=$(ubus call network.interface.wan status | jsonfilter -e '@.l3_device')
-    
+    DUMP="$(ubus call network.interface dump)"
+
+    VPN_LIST=""
+    WAN_LIST=""
+    FULL_LIST=""
+
+    for iface in $(echo "$DUMP" | jsonfilter -e '@.interface[*].interface'); do
+        FULL_LIST="${FULL_LIST} ${iface}"
+
+        [ "$iface" = "loopback" ] && continue
+
+        DEVICE=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].l3_device")
+        echo "$DEVICE" | grep -Eq '^lo$' && continue
+
+        UP=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].up")
+        [ "$UP" != "true" ] && continue
+
+        PROTO=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].proto")
+        if echo "$PROTO"  | grep -Eq 'wgserver|wgclient|wireguard|openvpn|amnezia' \
+        || echo "$DEVICE" | grep -Eq 'amneziawg|awg|wg|tun|sing'; then
+            VPN_LIST="${VPN_LIST} ${iface}"
+            continue
+        fi
+
+        GW=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].route[@.target='0.0.0.0' && @.mask=0].nexthop")
+        if [ -n "$GW" ]; then
+            WAN_LIST="${WAN_LIST} ${iface}"
+        fi
+    done
+
+    VPN_LIST="${VPN_LIST# }"
+    WAN_LIST="${WAN_LIST# }"
+    FULL_LIST="${FULL_LIST# }"
+
+    log_info "Detected VPN candidates: ${VPN_LIST:-<none>}"
+    log_info "Detected WAN candidates: ${WAN_LIST:-<none>}"
+
+    # Resolve VPN_INTERFACE
+    if [ -n "$VPN_INTERFACE" ] && echo " $FULL_LIST " | grep -q " $VPN_INTERFACE "; then
+        log_info "Using configured VPN interface: $VPN_INTERFACE"
+    else
+        VPN_COUNT=$(echo "$VPN_LIST" | wc -w)
+        if [ "$VPN_COUNT" -eq 1 ]; then
+            VPN_INTERFACE="$VPN_LIST"
+            log_info "Auto-detected VPN interface: $VPN_INTERFACE"
+        elif [ "$VPN_COUNT" -eq 0 ]; then
+            log_error "No active VPN interface detected. Configure VPN first or set VPN_INTERFACE."
+            exit 1
+        else
+            log_error "VPN_INTERFACE=$VPN_INTERFACE does not match VPN interfaces detected: $VPN_LIST"
+            log_error "Set VPN_INTERFACE to one of them and re-run the installer."
+            exit 1
+        fi
+    fi
+
+    # Resolve WAN_INTERFACE
+    if [ -n "$WAN_INTERFACE" ] && echo " $WAN_LIST " | grep -q " $WAN_INTERFACE "; then
+        log_info "Using configured WAN interface: $WAN_INTERFACE"
+    else
+        WAN_COUNT=$(echo "$WAN_LIST" | wc -w)
+        if [ "$WAN_COUNT" -eq 1 ]; then
+            WAN_INTERFACE="$WAN_LIST"
+            log_info "Auto-detected WAN interface: $WAN_INTERFACE"
+        elif [ "$WAN_COUNT" -eq 0 ]; then
+            log_error "No WAN interface with default route detected."
+            exit 1
+        else
+            log_error "Multiple WAN interfaces detected: $WAN_LIST"
+            log_error "Set WAN_INTERFACE to one of them and re-run the installer."
+            exit 1
+        fi
+    fi
+
+    log_info "Step 4.3: Generating /etc/firewall.user..."
+
     cat << EOF > /etc/firewall.user
 #!/bin/sh
 # KPBR routing rules
 
-# Add routing rules (remove old ones)
+VPN_INTERFACE="${VPN_INTERFACE}"
+WAN_INTERFACE="${WAN_INTERFACE}"
+
+# Reset fwmark rules (will be re-added below if interfaces are present)
 ip rule del fwmark 0x1 lookup vpnroute 2>/dev/null
 ip rule del fwmark 0x2 lookup wanroute 2>/dev/null
-ip rule add fwmark 0x1 lookup vpnroute
-ip rule add fwmark 0x2 lookup wanroute
 
-# Add routes
-WAN_GW=\$(ubus call network.interface.wan status | jsonfilter -e '@.route[@.target="0.0.0.0"].nexthop')
+# VPN interface
+VPN_STATUS=\$(ubus call network.interface."\$VPN_INTERFACE" status 2>/dev/null)
+if [ -n "\$VPN_STATUS" ]; then
+    VPN_DEVICE=\$(echo "\$VPN_STATUS" | jsonfilter -e '@.l3_device')
+    ip rule add fwmark 0x1 lookup vpnroute
+    ip route replace default dev "\$VPN_DEVICE" table vpnroute
+else
+    echo "[kPBR] ERROR: VPN interface '\$VPN_INTERFACE' not found, check /etc/firewall.user configuration" >&2
+    echo "[kPBR] ERROR: skipping vpn routing rules" >&2
+fi
 
-ip route add default dev ${VPN_INTERFACE} table vpnroute
-ip route add default via \${WAN_GW} dev ${WAN_INTERFACE} table wanroute
+# WAN interface
+WAN_STATUS=\$(ubus call network.interface."\$WAN_INTERFACE" status 2>/dev/null)
+if [ -n "\$WAN_STATUS" ]; then
+    WAN_DEVICE=\$(echo "\$WAN_STATUS" | jsonfilter -e '@.l3_device')
+    WAN_GW=\$(echo "\$WAN_STATUS" | jsonfilter -e '@.route[@.target="0.0.0.0"].nexthop')
+    ip rule add fwmark 0x2 lookup wanroute
+    ip route replace default via "\$WAN_GW" dev "\$WAN_DEVICE" table wanroute
+else
+    echo "[kPBR] ERROR: WAN interface '\$WAN_INTERFACE' not found, check /etc/firewall.user configuration" >&2
+    echo "[kPBR] ERROR: skipping wan routing rules" >&2
+fi
 
 # Add known cidrs
 while read ELEMENT; do
@@ -318,18 +409,10 @@ main() {
     log_info "Configuration summary:"
     echo "  - VPN Interface: $VPN_INTERFACE"
     echo "  - WAN Interface: $WAN_INTERFACE"
-    echo "  - WAN Gateway: $WAN_GATEWAY"
-    echo ""
-    log_info "You can verify the setup with:"
-    echo "  - nft list set inet fw4 vpn_domain_set"
-    echo "  - nft list set inet fw4 wan_domain_set"
-    echo "  - ip rule show"
-    echo "  - ip route show table vpnroute"
-    echo "  - ip route show table wanroute"
     echo ""
     echo "test kpbr:    sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/test-kpbr.sh)"
     echo "update lists: sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/update-kpbr.sh)"
-    echo "uninstall:    sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/test/uninstall-kpbr.sh)"
+    echo "uninstall:    sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/uninstall-kpbr.sh)"
 }
 
 # Run main function

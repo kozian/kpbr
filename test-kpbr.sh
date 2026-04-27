@@ -30,5 +30,7 @@ dnsmasq --test
 echo
 echo "-- dnsmasq --test for nftset.conf --"
 dnsmasq --test --conf-file=/etc/dnsmasq.d/nftset.conf
+echo "-- dnsmasq --test for dns-servers.conf --"
+dnsmasq --test --conf-file=/etc/dnsmasq.d/dns-servers.conf
 
 #set +x
