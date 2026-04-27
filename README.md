@@ -11,7 +11,7 @@
 Основные файлы. Они собираются вручную из других. 
   - wan-full.lst: сборный файл всех доменов, которые должны ходить напрямую без VPN
   - vpn-full.lst: сборный файл всех доменов, которые должны ходить через VPN
-  - vpn-cidrs.lst (в корне): сборный файл всех CIDR, которые должны ходить через VPN
+  - etc/nftables.d/vpn-cidrs.lst: сборный файл всех CIDR, которые должны ходить через VPN
 wan-full.lst и vpn-full.lst используются для генерации nftset.conf скриптом create-nftsets.sh
 
 Доп. файлы, информативные
@@ -67,8 +67,9 @@ wget -qO- https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/install-
 
 ```bash
 wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/install-kpbr.sh
-wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/nftset.conf
-wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/vpn-cidrs.lst
+mkdir -p etc/dnsmasq.d etc/nftables.d
+wget -O etc/dnsmasq.d/nftset.conf  https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/etc/dnsmasq.d/nftset.conf
+wget -O etc/nftables.d/vpn-cidrs.lst https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/etc/nftables.d/vpn-cidrs.lst
 chmod +x install-kpbr.sh
 ./install-kpbr.sh
 ```
@@ -255,7 +256,7 @@ ip route
 
 Проверьте доступность репозитория:
 ```bash
-wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/nftset.conf
+wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/etc/dnsmasq.d/nftset.conf
 ```
 
 ### Ошибка при установке dnsmasq-full

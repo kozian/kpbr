@@ -11,7 +11,9 @@ set -e  # Exit on error
 # Configuration
 REPO_URL="https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/"
 NFTSET_FILE="nftset.conf"
+NFTSET_SRC="etc/dnsmasq.d/nftset.conf"
 CIDR_FILE="vpn-cidrs.lst"
+CIDR_SRC="etc/nftables.d/vpn-cidrs.lst"
 NFTSET_TARGET="/etc/dnsmasq.d/nftset.conf"
 CIDR_TARGET="/etc/nftables.d/vpn-cidrs.lst"
 LOG_FILE="/var/log/kpbr-update.log"
@@ -86,15 +88,15 @@ download_files() {
     #log_info "Downloading new versions from repository..."
 
     # Download nftset.conf
-    log_info "Downloading ${REPO_URL}/${NFTSET_FILE}"
-    if ! wget -q -O "/tmp/${NFTSET_FILE}.new" "${REPO_URL}/${NFTSET_FILE}"; then
+    log_info "Downloading ${REPO_URL}/${NFTSET_SRC}"
+    if ! wget -q -O "/tmp/${NFTSET_FILE}.new" "${REPO_URL}/${NFTSET_SRC}"; then
         log_error "Failed to download ${NFTSET_FILE}"
         return 1
     fi
 
     # Download vpn-cidrs.lst
-    log_info "Downloading ${REPO_URL}/${CIDR_FILE}"
-    if ! wget -q -O "/tmp/${CIDR_FILE}.new" "${REPO_URL}/${CIDR_FILE}"; then
+    log_info "Downloading ${REPO_URL}/${CIDR_SRC}"
+    if ! wget -q -O "/tmp/${CIDR_FILE}.new" "${REPO_URL}/${CIDR_SRC}"; then
         log_error "Failed to download ${CIDR_FILE}"
         rm -f "/tmp/${NFTSET_FILE}.new"
         return 1

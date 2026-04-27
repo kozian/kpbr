@@ -24,7 +24,7 @@ process_domain_file() {
     done < "$input_file"
 }
 
-NFTSET="nftset.conf"
+NFTSET="etc/dnsmasq.d/nftset.conf"
 ADD_TEST_HOSTS=true
 
 # Парсинг аргументов командной строки

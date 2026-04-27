@@ -11,7 +11,9 @@ set -e  # Exit on error
 # Configuration
 REPO_URL="https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/"
 NFTSET_FILE="nftset.conf"
+NFTSET_SRC="etc/dnsmasq.d/nftset.conf"
 CIDR_FILE="vpn-cidrs.lst"
+CIDR_SRC="etc/nftables.d/vpn-cidrs.lst"
 VPN_INTERFACE="amneziawg"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -149,14 +151,14 @@ configure_dnsmasq() {
     check_success "Failed to create /etc/dnsmasq.d directory" "dnsmasq.d directory created"
     
     # Check for local file first, download if not present
-    if [ -f "${SCRIPT_DIR}/${NFTSET_FILE}" ]; then
-        log_info "Using local ${NFTSET_FILE} file"
+    if [ -f "${SCRIPT_DIR}/${NFTSET_SRC}" ]; then
+        log_info "Using local ${NFTSET_SRC} file"
         # Copy to dnsmasq.d
-        cp ${SCRIPT_DIR}/${NFTSET_FILE} /etc/dnsmasq.d/nftset.conf
+        cp ${SCRIPT_DIR}/${NFTSET_SRC} /etc/dnsmasq.d/nftset.conf
         check_success "Failed to copy nftset configuration" "nftset configuration copied"
     else
         log_info "Downloading nftset list from repository..."
-        wget -O /tmp/${NFTSET_FILE} ${REPO_URL}/${NFTSET_FILE}
+        wget -O /tmp/${NFTSET_FILE} ${REPO_URL}/${NFTSET_SRC}
         check_success "Failed to download nftset list" "nftset list downloaded"
 
         # Copy to dnsmasq.d
@@ -224,15 +226,15 @@ configure_routing_tables() {
 
 configure_routing_rules() {
     # Check for local file first, download if not present
-    if [ -f "${SCRIPT_DIR}/${CIDR_FILE}" ]; then
-        log_info "Using local ${CIDR_FILE} file"
-        cp "${SCRIPT_DIR}/${CIDR_FILE}" /etc/nftables.d/vpn-cidrs.lst
+    if [ -f "${SCRIPT_DIR}/${CIDR_SRC}" ]; then
+        log_info "Using local ${CIDR_SRC} file"
+        cp "${SCRIPT_DIR}/${CIDR_SRC}" /etc/nftables.d/vpn-cidrs.lst
         check_success "Failed to copy CIDR configuration" "CIDR configuration copied"
     else
         log_info "Downloading CIDR for VPN from repository..."
-        wget -O /tmp/${CIDR_FILE} ${REPO_URL}/${CIDR_FILE}
+        wget -O /tmp/${CIDR_FILE} ${REPO_URL}/${CIDR_SRC}
         check_success "Failed to download CIDR list" "CIDR list downloaded"
-        
+
         # Copy to nftables.d
         cp /tmp/${CIDR_FILE} /etc/nftables.d/vpn-cidrs.lst
         check_success "Failed to copy CIDR configuration" "CIDR configuration copied"
@@ -240,6 +242,7 @@ configure_routing_rules() {
     
     log_info "Step 4.2: Configuring routing rules..."
 
+## добавить проверку на пустое значение
     WAN_INTERFACE=$(ubus call network.interface.wan status | jsonfilter -e '@.l3_device')
     
     cat << EOF > /etc/firewall.user
