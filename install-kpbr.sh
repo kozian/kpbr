@@ -248,25 +248,25 @@ configure_routing_rules() {
     WAN_LIST=""
     FULL_LIST=""
 
-    for iface in $(echo "$DUMP" | jsonfilter -e '@.interface[*].interface'); do
+    for iface in $(echo "$DUMP" | jsonfilter -e '@.interface[*].interface' || :); do
         FULL_LIST="${FULL_LIST} ${iface}"
 
         [ "$iface" = "loopback" ] && continue
 
-        DEVICE=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].l3_device")
+        DEVICE=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].l3_device" || :)
         echo "$DEVICE" | grep -Eq '^lo$' && continue
 
-        UP=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].up")
+        UP=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].up" || :)
         [ "$UP" != "true" ] && continue
 
-        PROTO=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].proto")
+        PROTO=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].proto" || :)
         if echo "$PROTO"  | grep -Eq 'wgserver|wgclient|wireguard|openvpn|amnezia' \
         || echo "$DEVICE" | grep -Eq 'amneziawg|awg|wg|tun|sing'; then
             VPN_LIST="${VPN_LIST} ${iface}"
             continue
         fi
 
-        GW=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].route[@.target='0.0.0.0' && @.mask=0].nexthop")
+        GW=$(echo "$DUMP" | jsonfilter -e "@.interface[@.interface='$iface'].route[@.target='0.0.0.0' && @.mask=0].nexthop" || :)
         if [ -n "$GW" ]; then
             WAN_LIST="${WAN_LIST} ${iface}"
         fi
@@ -324,31 +324,32 @@ configure_routing_rules() {
 VPN_INTERFACE="${VPN_INTERFACE}"
 WAN_INTERFACE="${WAN_INTERFACE}"
 
+logger -t kPBR -p daemon.info "Configuring kpbr for WAN=\$WAN_INTERFACE and VPN=\$VPN_INTERFACE"
 # Reset fwmark rules (will be re-added below if interfaces are present)
 ip rule del fwmark 0x1 lookup vpnroute 2>/dev/null
 ip rule del fwmark 0x2 lookup wanroute 2>/dev/null
 
 # VPN interface
-VPN_STATUS=\$(ubus call network.interface."\$VPN_INTERFACE" status 2>/dev/null)
+VPN_STATUS=\$(ubus call network.interface."\$VPN_INTERFACE" status || :)
 if [ -n "\$VPN_STATUS" ]; then
     VPN_DEVICE=\$(echo "\$VPN_STATUS" | jsonfilter -e '@.l3_device')
+    logger -t kPBR -p daemon.info "\$VPN_INTERFACE found. \"ip route replace default dev "\$VPN_DEVICE" table vpnroute\""
     ip rule add fwmark 0x1 lookup vpnroute
     ip route replace default dev "\$VPN_DEVICE" table vpnroute
 else
-    echo "[kPBR] ERROR: VPN interface '\$VPN_INTERFACE' not found, check /etc/firewall.user configuration" >&2
-    echo "[kPBR] ERROR: skipping vpn routing rules" >&2
+    logger -t kPBR -p daemon.err "VPN interface '\$VPN_INTERFACE' not found, check /etc/firewall.user configuration"
 fi
 
 # WAN interface
-WAN_STATUS=\$(ubus call network.interface."\$WAN_INTERFACE" status 2>/dev/null)
+WAN_STATUS=\$(ubus call network.interface."\$WAN_INTERFACE" status || :)
 if [ -n "\$WAN_STATUS" ]; then
-    WAN_DEVICE=\$(echo "\$WAN_STATUS" | jsonfilter -e '@.l3_device')
-    WAN_GW=\$(echo "\$WAN_STATUS" | jsonfilter -e '@.route[@.target="0.0.0.0"].nexthop')
+    WAN_DEVICE=\$(echo "\$WAN_STATUS" | jsonfilter -e '@.l3_device' || :)
+    WAN_GW=\$(echo "\$WAN_STATUS" | jsonfilter -e '@.route[@.target="0.0.0.0"].nexthop' || :)
+    logger -t kPBR -p daemon.info "\$WAN_INTERFACE found. \"ip route replace default via "\$WAN_GW" dev "\$WAN_DEVICE" table wanroute\""
     ip rule add fwmark 0x2 lookup wanroute
     ip route replace default via "\$WAN_GW" dev "\$WAN_DEVICE" table wanroute
 else
-    echo "[kPBR] ERROR: WAN interface '\$WAN_INTERFACE' not found, check /etc/firewall.user configuration" >&2
-    echo "[kPBR] ERROR: skipping wan routing rules" >&2
+    logger -t kPBR -p daemon.err "WAN interface '\$WAN_INTERFACE' not found, check /etc/firewall.user configuration"
 fi
 
 # Add known cidrs
