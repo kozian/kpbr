@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# ./create-all-nftsets.sh                  - создаст nftset.conf с доменами wan\vpn и доменами ifcofnig для тестов
-# ./create-all-nftsets.sh --no-test-hosts  - создаст nftset.conf с доменами wan\vpn без тестовых доменов
-# ./create-all-nftsets.sh my-set.txt       - создаст my-set.txt с доменами wan\vpn
+# ./create-nftsets.sh                  - создаст nftset.conf с доменами wan\vpn и доменами ifcofnig для тестов
+# ./create-nftsets.sh --no-test-hosts  - создаст nftset.conf с доменами wan\vpn без тестовых доменов
+# ./create-nftsets.sh my-set.txt       - создаст my-set.txt с доменами wan\vpn
 
 # Функция для обработки доменов из файла
 process_domain_file() {

@@ -1,4 +1,4 @@
-# install-kpbr.sh - kpbe Installation Script
+# install-kpbr.sh - kpbr Installation Script
 ## Предусловия
 1. На роутере установлена OpenWRT. См. инструкцию для роутера, например для [CUDY TR3000](./CUDY-TR3000.md). 
 2. На роутере настроен VPN. См. инструкцию [amnezia wg](./Install_amneziaWG.md).
@@ -45,12 +45,13 @@ sh <(wget -O - https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/tes
 Детально проверку см в основном [README](../README.md)
 
 Проверить работу PBR можно через echo-сервисы. 
-  - В тестовых целях ifconfig.me добавлен в список VPN, а ifconfig.io - WAN. 
+  - В тестовых целях ifconfig.me и ifconfig.io добавлены в список WAN. 
+  - ip.kozian.cc - добавлен в список VPN
   - Важно! Не сработает с самого роутера. На нем запросы не идут через prerouting и не маркируются.
 
-`curl https://ifconfig.me`  - должен показать IP VPN
+`curl https://ifconfig.me`  - должен показать IP WAN
 `curl https://ifconfig.io`  - должен показать IP WAN
-`curl https://ip.kozian.cc` - должен показать IP маршрута по-умолчанию
+`curl https://ip.kozian.cc` - должен показать IP VPN
 
 ## Автоматическое обновление
 
