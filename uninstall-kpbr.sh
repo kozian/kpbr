@@ -4,6 +4,7 @@
 rm -f /etc/nftables.d/sets.nft
 rm -f /etc/nftables.d/rules.nft
 rm -f /etc/dnsmasq.d/nftset.conf
+rm -f /etc/dnsmasq.d/dns-servers.conf
 rm -f /etc/firewall.user
 rm -f /etc/hotplug.d/iface/25-firewall-user
 

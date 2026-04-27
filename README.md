@@ -1,10 +1,9 @@
 # Краткое описание
   - install-kpbr.sh - настраивает маршрутизацию по доменным именам.
-    - тянет nftset.conf со списками доменов по wan и vpn
-    - тянет vpn-cidrs.lst со список cidr которые нужно пускать через vpn (tg, claude etc)
-    - зависит от настройки интерфейса для VPN, ниже описано как поставить amneziawg для него. 
+  - test-kpbr.sh - диагностическая проверка по настройке kpbr
   - update-kpbr.sh - обновляет списки nftset.conf и vpn-cidrs.lst на актуальные из репы.
-  - create-nftsets.sh - опциональный скрипт для сбора nftset.conf из файлов со списками доменов (из sources/)
+  - uninstall-kpbr.sh - удаляет kpbr.
+  - create-nftsets.sh - служебный скрипт для создания nftset.conf из файлов со списками доменов (из sources/)
 
 ## source
 Содержит файлы со списками CIDR/доменов, на базе которых генерируются списки для маршрутизации.
@@ -54,8 +53,8 @@ wan-full.lst и vpn-full.lst используются для генерации 
 ## Требования
 
 - OpenWrt 24.10.2
-- Настроенный VPN интерфейс `amneziawg`
-- Доступ к репозиторию с файлами `nftset.conf` и `vpn-cirds.lst` (или сохраненные файлы в папке со скриптом)
+- Настроенный VPN интерфейс `amneziawg` (или другой, но тогда нужно поменять в скрипте установки параметр)
+- Доступ к репозиторию с файлами `nftset.conf` и `vpn-cirds.lst` (можно вручную сохранить)
 
 ## Установка
 
@@ -72,6 +71,16 @@ wget -O /etc/dnsmasq.d/nftset.conf    https://raw.githubusercontent.com/kozian/k
 wget -O /etc/nftables.d/vpn-cidrs.lst https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/etc/nftables.d/vpn-cidrs.lst
 chmod +x install-kpbr.sh
 ./install-kpbr.sh
+```
+
+Также можно скачать остальные скрипты
+```bash
+wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/test-kpbr.sh
+wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/update-kpbr.sh
+wget https://raw.githubusercontent.com/kozian/kpbr/refs/heads/main/uninstall-kpbr.sh
+chmod +x test-kpbr.sh
+chmod +x update-kpbr.sh
+chmod +x uninstall-kpbr.sh
 ```
 
 ## Структура файлов после установки
