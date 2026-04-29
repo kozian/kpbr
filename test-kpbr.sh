@@ -28,9 +28,13 @@ echo
 echo "-- dnsmasq --test --"
 dnsmasq --test
 echo
+
 echo "-- dnsmasq --test for nftset.conf --"
 dnsmasq --test --conf-file=/etc/dnsmasq.d/nftset.conf
+echo
+
 echo "-- dnsmasq --test for dns-servers.conf --"
 dnsmasq --test --conf-file=/etc/dnsmasq.d/dns-servers.conf
+echo
 
 #set +x
