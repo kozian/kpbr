@@ -116,10 +116,15 @@ create_nftsets() {
     cat << 'EOF' > /etc/nftables.d/sets.nft
 set vpn_domain_set {
     type ipv4_addr
-    flags interval
+    flags interval, timeout
+    timeout 6h
+    gc-interval 10m
 }
 set wan_domain_set {
     type ipv4_addr
+    flags interval, timeout
+    timeout 6h
+    gc-interval 10m
 }
 EOF
     check_success "Failed to create nftables sets configuration" "nftables sets configuration created"
@@ -356,6 +361,7 @@ fi
 while read ELEMENT; do
     nft add element inet fw4 vpn_domain_set { \${ELEMENT} }
 done < /etc/nftables.d/vpn-cidrs.lst
+
 EOF
     
     check_success "Failed to create firewall.user script" "firewall.user script created"
